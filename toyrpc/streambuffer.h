@@ -105,16 +105,27 @@ public:
     }
   }
 
+  template<class T>
+  void WriteHead(const T & val) {
+    WriteHead((char*)&val, sizeof(val));
+  }
+
   void WriteHead(const char * buf, size_t size) {
     // assert const_buf_ is false;
-    /*
     if (gpos_ < size) {
       size_t new_size = std::max(
-          size + ppos_, ppos_ + RESERVED_HEADER_SPACE);
+          size, RESERVED_HEADER_SPACE) + ppos_;
       char * new_buf = (char *)malloc(new_size);
-
+      size_t new_gpos = new_size - (ppos_ - gpos_);
+      memcpy(new_buf + new_gpos, buf_ + gpos_, ppos_ - gpos_);
+      free(buf_);
+      buf_ = new_buf;
+      gpos_ = new_gpos;
+      ppos_ = new_size;
+      pend_ = new_size;
     }
-    */
+    gpos_ -= size;
+    memcpy(buf_ + gpos_, buf, size);
   }
 
 private:
@@ -123,7 +134,7 @@ private:
 
   char * buf_;
   bool const_buf_;  // const buffers should not be written into
-  size_t pend_;  // end of buffer0
+  size_t pend_;  // end of buffer
   size_t gpos_;  // start of get
   size_t ppos_;  // start of put
 
